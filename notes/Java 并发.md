@@ -20,6 +20,9 @@
     * [1. 阻塞](#1-阻塞)
     * [2. 中断](#2-中断)
 * [线程状态转换](#线程状态转换)
+* [volatile](#volatile)
+    * [1. 内存可见性](#1-内存可见性)
+    * [2. 禁止指令重排](#2-禁止指令重排)
 * [内存模型](#内存模型)
     * [1. 硬件的效率与一致性](#1-硬件的效率与一致性)
     * [2. Java 内存模型](#2-java-内存模型)
@@ -58,7 +61,7 @@
 
 1. 实现 Runnable 接口；
 2. 实现 Callable 接口；
-3. 继承 Thread 类；
+3. 继承 Thread 类。
 
 实现 Runnable 和 Callable 接口的类只能当做一个可以在线程中运行的任务，不是真正意义上的线程，因此最后还需要通过 Thread 来调用。可以说任务是通过线程驱动从而执行的。
 
@@ -86,11 +89,11 @@ public class MyRunnable implements Runnable {
 与 Runnable 相比，Callable 可以有返回值，返回值通过 FutureTask 进行封装。
 
 ```java
-public  class  MyCallable  implements  Callable<Integer> {
+public class MyCallable implements Callable<Integer> {
     public Integer call() {
         // ...
     }
-    public  static  void  main(String[]  args) {
+    public static void main(String[]  args) {
         MyCallable mc = new MyCallable();
         FutureTask<Integer> ft = new FutureTask<>(mc);
         Thread thread = new Thread(ft);
@@ -105,11 +108,11 @@ public  class  MyCallable  implements  Callable<Integer> {
 同样也是需要实现 run() 方法，并且最后也是调用 start() 方法来启动线程。
 
 ```java
-class MyThread extends Thread {
+public class MyThread extends Thread {
     public void run() {
         // ...
     }
-    public  static  void  main(String[]  args) {
+    public static void main(String[] args) {
         MyThread mt = new MyThread();
         mt.start();
     }
@@ -120,14 +123,15 @@ class MyThread extends Thread {
 
 实现接口会更好一些，因为：
 
-1. Java 不支持多重继承，因此继承了 Thread 类就无法继承其它类，但是可以实现多个接口。
+1. Java 不支持多重继承，因此继承了 Thread 类就无法继承其它类，但是可以实现多个接口；
 2. 类可能只要求可执行即可，继承整个 Thread 类开销会过大。
 
 # Executor
 
 Executor 管理多个异步任务的执行，而无需程序员显示地管理线程的生命周期。
 
-主要有三种 Excutor：
+主要有三种 Executor：
+
 
 1. CachedTreadPool：一个任务创建一个线程；
 2. FixedThreadPool：所有任务只能使用固定大小的线程；
@@ -154,7 +158,7 @@ public void run() {
         // ...
         Thread.sleep(1000);
         // ...
-    } catch(InterruptedException e) {
+    } catch (InterruptedException e) {
         System.err.println(e);
     }
 }
@@ -306,7 +310,7 @@ public class Producer implements Runnable {
 // 消费者
 import java.util.concurrent.BlockingQueue;
 
-public class Consumer implements Runnable{
+public class Consumer implements Runnable {
     private BlockingQueue<String> queue;
 
     public Consumer(BlockingQueue<String> queue) {
@@ -423,6 +427,26 @@ interrupted() 方法在检查完中断状态之后会清除中断状态，这样
 - LockSupport.parkNanos() 方法
 - LockSupport.parkUntil() 方法
 
+# volatile
+
+保证了内存可见性和禁止指令重排，没法保证原子性。
+
+## 1. 内存可见性
+
+普通共享变量被修改之后，什么时候被写入主存是不确定的。
+
+volatile 关键字会保证每次修改共享变量之后该值会立即更新到内存中，并且在读取时会从内存中读取值。
+
+synchronized 和 Lock 也能够保证内存可见性。它们能保证同一时刻只有一个线程获取锁然后执行同步代码，并且在释放锁之前会将对变量的修改刷新到主存当中。不过只有对共享变量的 set() 和 get() 方法都加上 synchronized 才能保证可见性，如果只有 set() 方法加了 synchronized，那么 get() 方法并不能保证会从内存中读取最新的数据。
+
+## 2. 禁止指令重排
+
+在 Java 内存模型中，允许编译器和处理器对指令进行重排序，重排序过程不会影响到单线程程序的执行，却会影响到多线程并发执行的正确性。
+
+volatile 关键字通过添加内存屏障的方式来进制指令重排，即重排序时不能把后面的指令放到内存屏障之前。
+
+可以通过 synchronized 和 Lock 来保证有序性，它们保证每个时刻只有一个线程执行同步代码，相当于是让线程顺序执行同步代码，自然就保证了有序性。
+
 # 内存模型
 
 ## 1. 硬件的效率与一致性
@@ -437,7 +461,7 @@ interrupted() 方法在检查完中断状态之后会清除中断状态，这样
 
 ## 2. Java 内存模型
 
-Java 虚拟机规范中试图定义一种 Java 内存模型来屏蔽掉各种硬件和操作系统的内存访问差异，以实现让 Java 程序在各种平台下都能达到一致的内存访问效果。在此之前，主流程序语言（如 C/C++等）直接使用物理硬件和操作系统的内存模型，因此，会由于不同平台上内存模型的差异，有可能导致程序在一套平台上并发完全正常，而在另外一套平台上并发访问却经常出错，因此在某些场景就必须针对不同的平台来编写程序。
+Java 虚拟机规范中试图定义一种 Java 内存模型来屏蔽掉各种硬件和操作系统的内存访问差异，以实现让 Java 程序在各种平台下都能达到一致的内存访问效果。在此之前，主流程序语言（如 C/C++等）直接使用物理硬件和操作系统的内存模型，但由于不同平台上内存模型的差异，有可能导致程序在一套平台上并发完全正常，而在另外一套平台上并发访问却经常出错，因此在某些场景就必须针对不同的平台来编写程序。
 
 ## 3. 主内存与工作内存
 
@@ -615,7 +639,7 @@ public static void main(String[] args) {
         removeThread.start();
         printThread.start();
 
-        //不要同时产生过多的线程，否则会导致操作系统假死
+        // 不要同时产生过多的线程，否则会导致操作系统假死
         while (Thread.activeCount() > 20);
     }
 }
