@@ -22,6 +22,7 @@
 * [二十一、事务处理](#二十一事务处理)
 * [二十二、字符集](#二十二字符集)
 * [二十三、权限管理](#二十三权限管理)
+* [参考资料](#参考资料)
 <!-- GFM-TOC -->
 
 
@@ -369,7 +370,7 @@ ORDER BY num;
 
 可以将子查询的结果作为 WHRER 语句的过滤条件：
 
-```
+```sql
 SELECT *
 FROM mytable1
 WHERE col1 IN (SELECT col2
@@ -621,7 +622,7 @@ MySQL 不允许在触发器中使用 CALL 语句 ，也就是不能调用存储�
 3. 提交（commit）指将未存储的 SQL 语句结果写入数据库表；
 4. 保留点（savepoint）指事务处理中设置的临时占位符（placeholder），你可以对它发布回退（与回退整个事务处理不同）。
 
-不能回退 SELECT 语句，回退 SELECT 语句也没意义；也不能回退 CRETE 和 DROP 语句。
+不能回退 SELECT 语句，回退 SELECT 语句也没意义；也不能回退 CREATE 和 DROP 语句。
 
 MySQL 的事务提交默认是隐式提交，也就是每执行一条语句就把这条语句当成一个事务然后进行提交。当出现 START TRANSACTION 语句时，会关闭隐式提交；当 COMMIT 或 ROLLBACK 语句执行后，事务会自动关闭，重新恢复隐式提交。
 
@@ -730,3 +731,6 @@ GRANT 和 REVOKE 可在几个层次上控制访问权限：
 SET PASSWROD FOR myuser = Password('newpassword');
 ```
 
+# 参考资料
+
+- BenForta. SQL 必知必会 [M]. 人民邮电出版社, 2013.
